@@ -9,8 +9,8 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# STYLE du site
-st.markdown("""
+# STYLE de l'app web
+st.markdown(""" 
 <style>
     /* 1. TOUT LE FOND DU SITE */
     .stApp {
@@ -66,7 +66,7 @@ st.markdown("""
 
 # --- CONTENU DU DASHBOARD ---
 
-st.title("Prévision Données Macroéconomique - Burkina Faso (2026)")
+st.title("Prévision Données Macroéconomique (2026)")
 
 # Organisation en colonnes pour les chiffres clés
 col1, col2, col3 = st.columns(3)
@@ -82,7 +82,7 @@ with col3:
 # Espace pour tes futurs graphiques
 st.write("---")
 st.subheader("Analyses sectorielles 2010-2025")
-# Ici tu pourras ajouter tes graphiques (qui ressortiront super bien sur le noir)
+# Ici on ajoute les graphiques
 
 # TITRE
 st.title("📊 Dashboard des indicateurs économiques du Burkina Faso")
@@ -90,10 +90,11 @@ st.title("📊 Dashboard des indicateurs économiques du Burkina Faso")
 # CHARGEMENT DES DONNÉES
 @st.cache_data
 def load_data():
-    population = pd.read_csv("population_bf.csv", sep=";", encoding='latin1')
-    pib = pd.read_csv("pib_bf.csv", sep=";", encoding='latin1')
-    exportation_importation = pd.read_csv("exportation_importation_bf.csv", sep=";", encoding='latin1')
-    inflation = pd.read_csv("inflation_bf.csv", sep=";", encoding='latin1')
+    population = pd.read_csv("population_bf.csv", sep=";", encoding='latin1', decimal=",")
+    pib = pd.read_csv("pib_bf.csv", sep=";", encoding='latin1', decimal=",")
+    exportation_importation = pd.read_csv("exportation_importation_bf.csv", sep=";", encoding='latin1', decimal=",")
+    inflation = pd.read_csv("inflation_bf.csv", sep=";", encoding='latin1', decimal=",")
+    
     return {
         "Population": population,
         "PIB": pib,
@@ -114,7 +115,7 @@ table_choisie = st.sidebar.selectbox(
 df = tables[table_choisie] # On met les données du fichier choisi dans la variable "df"
 
 # --- FILTRE PAR ANNEES ---
-if "Annees" in df.columns:  # Si la colonne "Annee" existe dans ton fichier CSV
+if "Annees" in df.columns:  # Si la colonne "Annee" existe dans le fichier CSV
     Annees_min = int(df["Annees"].min()) # On cherche l'année la plus ancienne (le début) et on la transforme en nombre
     Annees_max = int(df["Annees"].max())     # On cherche l'année la plus récente (la fin) et on la transforme en nombre
 
@@ -146,7 +147,7 @@ st.dataframe(df, use_container_width=True) # On lui dit de prendre toute la larg
 st.subheader("📊 Visualisation")
 
 # AXE X AUTOMATIQUE (ANNÉE)
-# On regarde si la colonne "AnneeS" existe dans le fichier
+# On regarde si la colonne "Annees" existe dans le fichier
 if "Annees" in df.columns:
     col_x = "Annees" # Si oui, on choisit automatiquement l'Annees pour l'axe horizontal
 else:
@@ -165,7 +166,7 @@ cols_y = st.multiselect(
 # On crée une liste pour que l'utilisateur choisisse la forme du graphique
 type_graph = st.selectbox(
     "Type de graphique", # Le texte au-dessus du choix
-    ["Ligne", "Barres", "Scatter", "Histogramme"] # Les 4 options disponibles
+    ["Ligne", "Scatter"] # Les 2 options disponibles
 )
 
 # --- BOUTON D'AFFICHAGE ---
@@ -188,31 +189,13 @@ if st.button("📊 Afficher le graphique"):
             color="Variable", # couleurs différentes
             markers=True
         )
-
-    elif type_graph == "Barres":
-        fig = px.bar(
-            df_long,
-            x=col_x,
-            y="Valeur",
-            color="Variable",
-            barmode="group"
-        )
-
-    elif type_graph == "Scatter":
+    else:
         fig = px.scatter(
             df_long,
             x=col_x,
             y="Valeur",
             color="Variable"
         )
-
-    else:
-        fig = px.histogram(
-            df_long,
-            x="Valeur",
-            color="Variable"
-        )
-
     # --- STYLE DU GRAPHIQUE ---
     fig.update_layout(
         title=f"📈 Évolution des indicateurs au Burkina Faso",
@@ -229,26 +212,36 @@ if st.button("📊 Afficher le graphique"):
 # --- CALCUL DE LA PROGRESSION POUR TOUTES LES VARIABLES ---
 # On vérifie qu'on a choisi au moins une variable et qu'on a assez de données
 if len(cols_y) > 0 and len(df) > 1:
-    
-    # On crée des colonnes dans Streamlit pour aligner les résultats horizontalement
-    # (une colonne par variable sélectionnée)
+
     colonnes_metriques = st.columns(len(cols_y))
 
-    # On commence la boucle : "Pour chaque variable..."
     for i, col in enumerate(cols_y):
-        
-        # 1. On récupère le début et la fin pour CETTE colonne précise
+
+        #Récupération des valeurs
         valeur_debut = df.iloc[0][col]
         valeur_fin = df.iloc[-1][col]
 
-        # 2. On fait le calcul si le début n'est pas zéro
-        if valeur_debut != 0:
-            croissance = ((valeur_fin - valeur_debut) / valeur_debut) * 100
-            
-            # 3. On affiche le résultat dans la colonne correspondante
-            with colonnes_metriques[i]:
-                st.metric(
-                    label=f"Evolution {col}", 
-                    value=f"{round(croissance, 2)}%",
-                    delta=f"{round(valeur_fin - valeur_debut, 2)}" # Affiche aussi la différence brute
-                )
+        #Conversion PROPRE en float (solution clé)
+        try:
+            valeur_debut = float(str(valeur_debut).replace(",", ".").replace("%", "").strip())
+            valeur_fin = float(str(valeur_fin).replace(",", ".").replace("%", "").strip())
+
+            #Calcul sécurisé
+            if valeur_debut != 0:
+                croissance = ((valeur_fin - valeur_debut) / abs(valeur_debut)) * 100
+                variation = valeur_fin - valeur_debut
+            else:
+                croissance = 0
+                variation = 0
+
+        except:
+            croissance = 0
+            variation = 0
+
+        #Affichage
+        with colonnes_metriques[i]:
+            st.metric(
+                label=f"Evolution {col}",
+                value=f"{round(croissance, 2)} %",
+                delta=f"{round(variation, 2)}"
+            )
