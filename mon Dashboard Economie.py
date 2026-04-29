@@ -186,8 +186,8 @@ if st.button("📊 Afficher le graphique"):
             df_long,
             x=col_x,
             y="Valeur",
-            color="Variable", # couleurs différentes
-            markers=True
+            color="Variable", # couleurs différentes pour chaque variable
+            markers=True #on ajoute les petits points sur la ligne
         )
     else:
         fig = px.scatter(
@@ -212,16 +212,16 @@ if st.button("📊 Afficher le graphique"):
 # --- CALCUL DE LA PROGRESSION POUR TOUTES LES VARIABLES ---
 # On vérifie qu'on a choisi au moins une variable et qu'on a assez de données
 if len(cols_y) > 0 and len(df) > 1:
-
+    #on cree plusieurs colonnes 
     colonnes_metriques = st.columns(len(cols_y))
 
     for i, col in enumerate(cols_y):
 
         #Récupération des valeurs
-        valeur_debut = df.iloc[0][col]
-        valeur_fin = df.iloc[-1][col]
+        valeur_debut = df.iloc[0][col] #on prends la toutes premieres valeurs 
+        valeur_fin = df.iloc[-1][col]  #on prends la toutes dernieres valeurs 
 
-        #Conversion PROPRE en float (solution clé)
+        #Conversion PROPRE en float et suppression d'espace inutile avec .strip()
         try:
             valeur_debut = float(str(valeur_debut).replace(",", ".").replace("%", "").strip())
             valeur_fin = float(str(valeur_fin).replace(",", ".").replace("%", "").strip())
@@ -231,10 +231,12 @@ if len(cols_y) > 0 and len(df) > 1:
                 croissance = ((valeur_fin - valeur_debut) / abs(valeur_debut)) * 100
                 variation = valeur_fin - valeur_debut
             else:
+                #si on part de zero le calcul de pourcentage est impossible
                 croissance = 0
                 variation = 0
 
         except:
+            #en cas de bug(texte a la place de chiffre), on met zero
             croissance = 0
             variation = 0
 
@@ -243,5 +245,5 @@ if len(cols_y) > 0 and len(df) > 1:
             st.metric(
                 label=f"Evolution {col}",
                 value=f"{round(croissance, 2)} %",
-                delta=f"{round(variation, 2)}"
+                delta=f"{round(variation, 2)}" #Affiche une fleche
             )
