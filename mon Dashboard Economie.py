@@ -172,12 +172,12 @@ type_graph = st.selectbox(
 # --- BOUTON D'AFFICHAGE ---
 if st.button("📊 Afficher le graphique"):
 
-    # Transformer les données pour gérer plusieurs variables
+    # on cree un nouveau tableau a partir de df(passe du format large à long)
     df_long = df.melt(
-        id_vars=[col_x], 
-        value_vars=cols_y,
-        var_name="Variable", 
-        value_name="Valeur"
+        id_vars=[col_x], #c'est la colonne pilier qui ne bouge pas (Annees)
+        value_vars=cols_y, #ce sont les colonnes qu'on veut demontrer
+        var_name="Variable", #ce sont les titre des nouvelles colonnes qui vas lister les anciens colonnes
+        value_name="Valeur"  #c'est le titre de la colonne qui contiendra les valeur de ces colonnes
     )
 
     # --- CHOIX DU TYPE DE GRAPHIQUE ---
@@ -201,8 +201,8 @@ if st.button("📊 Afficher le graphique"):
         title=f"📈 Évolution des indicateurs au Burkina Faso",
         template="plotly_dark",
         legend_title="Indicateurs",
-        hovermode="x unified",
-        margin=dict(t=50, b=50, l=50, r=50)
+        hovermode="x unified", #le mode survol:quand la souris passe sur le graph, ca affiche les infos
+        margin=dict(t=50, b=50, l=50, r=50) #les marges: on laisse de laiss autour du graph
     )
 
     # --- AFFICHAGE DU GRAPHIQUE---
